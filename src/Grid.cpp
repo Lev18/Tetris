@@ -1,8 +1,8 @@
-#include "Grid.h"
+#include "../include/Grid.h"
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
-#include "Colors.h"
+#include "../include/Colors.h"
 
 Grid::Grid() : m_num_row{20}, m_num_col{10}, m_cell_size{30} {
   Initialize();

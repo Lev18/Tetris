@@ -1,8 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "Game.h"
-#include "Colors.h"
+#include "../include/Game.h"
+#include "../include/Colors.h"
 #include <iostream>
 
 namespace ColisCntrl {
@@ -25,29 +25,24 @@ namespace ColisCntrl {
      }
    return false;
   }
+
   void MoveBlockDown(Game& game, const double speed, sf::Clock& clock) {
      if (ColisCntrl::EventTrigger(speed, clock)) {
          game.move_block_down();
       }
-
   }
 }
 
 int main() {
   // creating game controled object for starting game
  Game game;
- sf::SoundBuffer buffer;
- std::string mus = "../music/44062__feegle__gamepiece.wav";
- if (!buffer.loadFromFile(mus)) {
-   std::cerr << "Unable open music file" << std::endl;
-   return -1;
- }
- sf::Sound sound;
- sound.setBuffer(buffer);
- sound.setVolume(100);
- sound.setPitch(1.0f);
-
- sound.play();
+ sf::Music music;
+ music.openFromFile("../music/zoekk-cbla4.wav");
+ music.setVolume(70);
+ music.setPitch(0.7f);
+ music.setLoop(true);
+ music.play();
+ 
  // creating clock for colision control
  sf::Clock clock;
  const float POINT = 6;
@@ -63,16 +58,20 @@ int main() {
        game.close_window();
       }
     }
+
     // call input_handler function for controlling block state 
     game.input_handler();
     if (game.get_score() > 4000) {
       ColisCntrl::MoveBlockDown(game, ColisCntrl::HIGH_SPEED, clock);
+      music.setPitch(1.2f);
     }
     else  if (game.get_score() > 2000 && game.get_score() <= 4000 ) {
       ColisCntrl::MoveBlockDown(game, ColisCntrl::MID_SPEED_2, clock);
+      music.setPitch(1.1f);
     }
     else if (game.get_score() < 2000 && game.get_score() > 500) {
        ColisCntrl::MoveBlockDown(game, ColisCntrl::MID_SPEED_1, clock);
+       music.setPitch(0.9);
     } 
     else {
       ColisCntrl::MoveBlockDown(game, ColisCntrl::LOW_SPEED, clock);
@@ -94,8 +93,10 @@ int main() {
     game.display_score();
 
     if (game.get_game_isover_status()) {    
-      game.display_text("Game over", 32, 319, 450);
+      game.display_text("Game over", 32, 319, 450); 
+      music.stop();
     }
     game.display_window();
     }
+  std::cout << "hello" ;
 }

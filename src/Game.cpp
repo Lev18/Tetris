@@ -1,8 +1,15 @@
-#include "Game.h"
+#include "../include/Game.h"
+#include <iostream>
 #include <math.h>
 
-Game::Game(): m_window{sf::VideoMode(500, 620), "Tetris"} {
+
+Game::Game(): m_window{sf::VideoMode(500, 620), "Tetris"}, is_playing_music(false) {
   grid = Grid();
+  m_font.loadFromFile("../Font/Oxygen-Bold.ttf");
+  m_clear_music.openFromFile("../music/521268__mrthenoronha__jump-spring-8-bit.wav");
+  m_clear_music.setVolume(100);
+  m_clear_music.setPitch(1.0f);
+  m_clear_music.setLoop(true);
   m_score = 0;
   m_blocks = get_all_blocks(); 
   m_current_block = get_random_block();
@@ -28,7 +35,7 @@ Block Game::get_random_block() {
 }
 
 
-std::vector<Block> Game::get_all_blocks() {
+std::vector<Block> Game::get_all_blocks() const {
   return {LBlock(), JBlock(), IBlock(), TBlock(), OBlock(), SBlock(), ZBlock()};
 }
 
@@ -67,17 +74,21 @@ void Game::input_handler() {
   // Move Right
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) && !move_right_pressed) {
     move_block_right();
+    play_music();
   } 
   else if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
     move_right_pressed = false;
+    stop_music();
   }
 
   // Move Left
   if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) && !move_left_pressed) {
     move_block_left();
+    play_music();
   } 
   else if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
     move_left_pressed = false;
+    stop_music();
   } 
 
   // Move Down
@@ -89,7 +100,7 @@ void Game::input_handler() {
   }
 
   // rotate_block
-  if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !move_round || block_fits() == false) {
+  if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Up) && !move_round) || block_fits() == false) {
     rotate_block();
     move_round = true;
   }
@@ -105,7 +116,7 @@ void Game::move_block_left() {
     if (is_block_outside() || block_fits() == false) {
       m_current_block.Move(0, 1);
     }
-    move_left_pressed = true;
+    move_left_pressed = true; 
   }
 }
 
@@ -116,8 +127,9 @@ void Game::move_block_right() {
     if(is_block_outside() || block_fits() == false) {
       m_current_block.Move(0, -1);
     }
-    move_right_pressed = true;  
+    move_right_pressed = true;   
   }
+
 }
 
 void Game::move_block_down() {
@@ -161,7 +173,12 @@ void Game::lock_blocks() {
     game_is_over = true;
   }
   m_next_block = get_random_block();
-  int cleared_row = grid.clear_full_row(); 
+  int cleared_row = grid.clear_full_row();
+  if (cleared_row > 0) {
+    m_clear_music.play();
+    sf::sleep(sf::seconds(0.2));
+  }
+
   switch (cleared_row) {
     case 1:
       m_score += 100;
@@ -179,6 +196,7 @@ void Game::lock_blocks() {
       m_score += 10;
   }
   cleared_row = 0;
+  m_clear_music.stop();
 }
 
 bool Game::block_fits() {
@@ -236,10 +254,8 @@ void Game::draw_rounded_rectangle(sf::ConvexShape& rrect, float x, float y, floa
 }
 
 void Game::display_text(const std::string& txt, int char_size, int posX, int posY) {
-  sf::Font font;
-  std::string fnt = "../Font/Oxygen-Bold.ttf";
-  font.loadFromFile(fnt);
-  text.setFont(font);
+ 
+  text.setFont(m_font);
   text.setString(txt);
   text.setCharacterSize(char_size);
   text.setPosition(posX, posY);
@@ -250,16 +266,14 @@ void Game::display_text(const std::string& txt, int char_size, int posX, int pos
 
 
 void Game::display_score() {
-  sf::Font font;
-  std::string fnt = "../Font/Oxygen-Bold.ttf";
-  font.loadFromFile(fnt);
-  game_score.setFont(font);
+  game_score.setFont(m_font);
   text.setString(std::to_string(m_score));
   text.setCharacterSize(24);
   text.setPosition(385, 75);
   text.setFillColor(sf::Color::Red);
   text.setStyle(sf::Text::Bold);
   m_window.draw(text);
+
 }
 
 bool Game::get_game_isover_status() {
@@ -268,4 +282,28 @@ bool Game::get_game_isover_status() {
 
 int Game::get_score() const {
   return m_score;
+}
+
+void Game::play_music() {
+  if (!is_playing_music) {
+     if (!buffer.loadFromFile("../music/44062__feegle__gamepiece.wav")) {
+       std::cerr << "Filed to load music from file" << std::endl;
+       return;
+    }
+    m_music.setBuffer(buffer);
+    m_music.setVolume(100);
+    m_music.setPitch(1.0f);
+    m_music.setLoop(true);
+
+    m_music.play();
+    is_playing_music = true; 
+    sf::sleep(sf::seconds(0.2));
+  }
+}
+
+void Game::stop_music() {
+  if(is_playing_music) {
+    m_music.stop();
+    is_playing_music = false;
+  }
 }

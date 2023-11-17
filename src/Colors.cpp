@@ -1,4 +1,4 @@
-#include "Colors.h"
+#include "../include/Colors.h"
 #include <SFML/Graphics.hpp>
 
 const sf::Color darkGrey = {26, 31, 40, 225};
